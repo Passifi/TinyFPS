@@ -4,13 +4,6 @@
 #include <iostream>
 #include "../include/fileIO.h"
 #define color(c) c.red,c.green,c.blue,c.alpha
-
-struct VertexDataInfo {
-  unsigned int stride;
-  std::vector<int> dataPointWidths;
-
-};
-
 struct Color {
   float red;
   float green;
@@ -27,20 +20,42 @@ class Camera {};
 class Input {};
 struct Texture {};
 struct Mesh {
+
+  Mesh(std::vector<float> vertices,uint stride) : vertices(vertices) ,stride(stride) {}
+  Mesh(std::vector<float> vertices,uint stride, std::vector<unsigned int> indices) : vertices(vertices), indices(indices),stride(stride) {}
+  Mesh(std::vector<float> vertices) : vertices(vertices) {}
   std::vector<float> vertices;
-  std::vector<int> indices;
-  VertexDataInfo vertexDataInfo;
+  std::vector<unsigned int> indices;
+  unsigned int stride; 
   unsigned int vao;
   unsigned int vbo;
+  unsigned int ebo;
   void intialize() {
+    if(indices.size() == 0) {
+      glGenBuffers(1,&vbo);
+      glGenVertexArrays(1,&vao);
+      glBindVertexArray(vao);
+      glBindBuffer(GL_ARRAY_BUFFER,vbo);
+      glBufferData(GL_ARRAY_BUFFER,sizeof(float)*vertices.size(),vertices.data(),GL_STATIC_DRAW);
+      glVertexAttribPointer(0,stride,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
+      glEnableVertexAttribArray(0);
+    } else {
     glGenBuffers(1,&vbo);
+    glGenBuffers(1,&ebo);
     glGenVertexArrays(1,&vao);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    glBindBuffer(GL_ARRAY_BUFFER,vbo); 
     glBufferData(GL_ARRAY_BUFFER,sizeof(float)*vertices.size(),vertices.data(),GL_STATIC_DRAW);
-    glVertexAttribPointer(0,vertexDataInfo.stride,GL_FLOAT,GL_FALSE,vertexDataInfo.stride*sizeof(float),(void*)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(unsigned int)*indices.size(),indices.data(),GL_STATIC_DRAW);
+    glVertexAttribPointer(0,stride,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
     glEnableVertexAttribArray(0);
+    }
+
+  }
+
+  void bindVAO() {
+    glBindVertexArray(vao);
   }
 }; 
 struct Model {};
@@ -58,6 +73,7 @@ struct VertexShader {
       std::cout << "Couldnt' compile vertex shader" << std::endl;
       glGetShaderInfoLog(id,512,NULL,infoLog);
       std::cout << infoLog << std::endl;
+      throw std::runtime_error("Couldn't compile vertex shader");
     }
   }
 };
@@ -74,6 +90,7 @@ struct FragmentShader {
       std::cout << "Couldnt' compile fragment shader" << std::endl;
       glGetShaderInfoLog(id,512,NULL,infoLog);
       std::cout << infoLog << std::endl;
+      throw std::runtime_error("Couldn't compile Fragment shader");
     }
 
   }
@@ -81,13 +98,20 @@ struct FragmentShader {
 
 struct Shader {
   unsigned int id;
-  void link(VertexShader vert, FragmentShader frag) {
+  void createProgram(const std::string& vertSource,const std::string& fragSource) {
+    VertexShader vertShader;
+    FragmentShader fragShader;
+    vertShader.compile(vertSource.c_str());
+    fragShader.compile(fragSource.c_str());
+    link(vertShader,fragShader);
+    glDeleteShader(vertShader.id);
+    glDeleteShader(fragShader.id);
+  }
+  void link(const VertexShader& vert,const FragmentShader& frag) {
       id = glCreateProgram();
       glAttachShader(id,vert.id);
       glAttachShader(id,frag.id);
       glLinkProgram(id);
-      glDeleteShader(vert.id);
-      glDeleteShader(frag.id);
   }
   void use() {
     glUseProgram(id);
@@ -95,25 +119,32 @@ struct Shader {
 };
 GraphicsConfig defaultGraphicsConfig {800,600};
 
-struct Rendereable {
-  Shader shader;
-  Mesh mesh;
+struct Renderable {
+  Shader& shader;
+  Mesh& mesh;
   void draw() {
     shader.use();
-    glBindVertexArray(mesh.vao); 
-    glDrawArrays(GL_TRIANGLES,0,3);
+    mesh.bindVAO();
+    glDrawElements(GL_TRIANGLES,mesh.indices.size(),GL_UNSIGNED_INT,0);
+    glBindVertexArray(0);
   }
 };
 
 class Renderer {
-  std::vector<Mesh> mesh;
+  std::vector<Renderable> mesh;
 };
 
+ Mesh mesh({ 0.5f,  0.5f, 0.0f,  // top right
+     0.5f, -0.5f, 0.0f,  // bottom right
+    -0.5f, -0.5f, 0.0f,  // bottom left
+    -0.5f,  0.5f, 0.0f   // top left 
+  },3,{0,1,3,1,2,3}); 
+  
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 int main(void) {
-  Color backgroundColor{0.8,0.3,0.3,1.0};
+  Color backgroundColor{0.2,0.3,0.3,1.0};
   // intialize Glfws
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -136,30 +167,11 @@ int main(void) {
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   std::string fragStc = loadFile("./shaderSrc/basic.frag");
   std::string vertSrc = loadFile("./shaderSrc/basic.vert");
-  Mesh mesh; 
-  mesh.vertices = {
-    -.5,-0.5f,0.0f,
-    .5,-0.5f,0.0f,
-    .0,.5f,0.0f,
-  };
-  FragmentShader fragShader;
-  VertexShader vertShader;
-  Shader shader;
-  
-    const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0"; 
-    std::cout << fragStc << std::endl;
-    std::cout << vertSrc << std::endl;
-    fragShader.compile(fragStc.c_str()) ;
-    vertShader.compile(vertSrc.c_str()); 
-    shader.link(vertShader,fragShader);
-    Rendereable renderObject{shader,mesh};
-    mesh.vertexDataInfo.stride = 3;
+ 
+    Shader shader;
+    shader.createProgram(vertSrc,fragStc);
     mesh.intialize();
+    Renderable renderObject{shader,mesh};
    
     while (!glfwWindowShouldClose(window)) {
     processInput(window);
