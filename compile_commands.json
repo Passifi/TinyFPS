@@ -1,0 +1,33 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/main.o",
+      "src/main.cpp"
+    ],
+    "directory": "/home/pascal/Code/LearningOpenGL",
+    "file": "/home/pascal/Code/LearningOpenGL/src/main.cpp",
+    "output": "/home/pascal/Code/LearningOpenGL/src/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/glad.o",
+      "src/glad.c"
+    ],
+    "directory": "/home/pascal/Code/LearningOpenGL",
+    "file": "/home/pascal/Code/LearningOpenGL/src/glad.c",
+    "output": "/home/pascal/Code/LearningOpenGL/src/glad.o"
+  }
+]
