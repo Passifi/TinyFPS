@@ -7,7 +7,8 @@
 #include <iostream>
 #include <variant>
 #include <array>
-
+#include <assert.h>
+#include "../include/fileIO.h"
 struct VertexShader {
   unsigned int id; 
   void compile(const char* source) {
@@ -47,34 +48,12 @@ struct FragmentShader {
 struct Shader {
   unsigned int id;
   std::map<std::string, unsigned int> uniformLocations; 
-  void createProgram(const std::string& vertSource,const std::string& fragSource) {
-    VertexShader vertShader;
-    FragmentShader fragShader;
-    vertShader.compile(vertSource.c_str());
-    fragShader.compile(fragSource.c_str());
-    link(vertShader,fragShader);
-    glDeleteShader(vertShader.id);
-    glDeleteShader(fragShader.id);
-  }
-  void link(const VertexShader& vert,const FragmentShader& frag) {
-      id = glCreateProgram();
-      glAttachShader(id,vert.id);
-      glAttachShader(id,frag.id);
-      glLinkProgram(id);
-  }
-  void use() {
-    glUseProgram(id);
-  }
-  void setFloatUniform(std::string name, float value) {
-    glUniform1f(uniformLocations[name],value);
-  }
-  void setVec4Uniform(std::string name, std::array<float,4> vec) {
-      glUniform4f(uniformLocations[name],vec[0],vec[1],vec[2],vec[3]);
-  }
-  void registerUniform(std::string name) {
-    int locationId = glGetUniformLocation(id,name.c_str());
-    uniformLocations[name]  = locationId;
-  }
+  void createProgram(const std::string& vertSource,const std::string& fragSource); 
+  void link(const VertexShader& vert,const FragmentShader& frag); 
+  void use() const; 
+  void setFloatUniform(const std::string& name,const float value);
+  void setVec4Uniform(const std::string& name, const std::array<float,4>& vec); 
+  void registerUniform(const std::string& name);
 };
 
 enum ShaderType {
@@ -103,13 +82,13 @@ class ShaderHandler {
             switch(config.type) {
                 case Fragment: {
                    FragmentShader fragShader;
-                   auto source = loadFile(config.source); 
+                   auto source = loadFromFile(config.source); 
                    fragShader.compile(source.c_str());
                    fragShaders[config.name] = fragShader;
                    break; }
                 case Vertex: {
                     VertexShader vertShader;
-                    auto source = loadFile(config.source); 
+                    auto source = loadFromFile(config.source); 
                     vertShader.compile(source.c_str());
                     vertexShaders[config.name] = vertShader;
                     break;
