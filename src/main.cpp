@@ -3,6 +3,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "../include/fileIO.h"
+#include "../include/shader.h"
+#include <cmath>
 #define color(c) c.red,c.green,c.blue,c.alpha
 struct Color {
   float red;
@@ -48,8 +50,10 @@ struct Mesh {
     glBufferData(GL_ARRAY_BUFFER,sizeof(float)*vertices.size(),vertices.data(),GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(unsigned int)*indices.size(),indices.data(),GL_STATIC_DRAW);
-    glVertexAttribPointer(0,stride,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE, stride*sizeof(float),(void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
     }
 
   }
@@ -60,63 +64,6 @@ struct Mesh {
 }; 
 struct Model {};
 
-struct VertexShader {
-  unsigned int id; 
-  void compile(const char* source) {
-    id = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(id,1,&source,NULL);
-    glCompileShader(id);
-    int success; 
-    char infoLog[512];
-    glGetShaderiv(id,GL_COMPILE_STATUS,&success);
-    if(!success) {
-      std::cout << "Couldnt' compile vertex shader" << std::endl;
-      glGetShaderInfoLog(id,512,NULL,infoLog);
-      std::cout << infoLog << std::endl;
-      throw std::runtime_error("Couldn't compile vertex shader");
-    }
-  }
-};
-struct FragmentShader {
-  unsigned int id; 
-  void compile(const char* source) {
-    id = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(id,1,&source,NULL);
-    glCompileShader(id);
-   int success; 
-    char infoLog[512];
-    glGetShaderiv(id,GL_COMPILE_STATUS,&success);
-    if(!success) {
-      std::cout << "Couldnt' compile fragment shader" << std::endl;
-      glGetShaderInfoLog(id,512,NULL,infoLog);
-      std::cout << infoLog << std::endl;
-      throw std::runtime_error("Couldn't compile Fragment shader");
-    }
-
-  }
-};
-
-struct Shader {
-  unsigned int id;
-  void createProgram(const std::string& vertSource,const std::string& fragSource) {
-    VertexShader vertShader;
-    FragmentShader fragShader;
-    vertShader.compile(vertSource.c_str());
-    fragShader.compile(fragSource.c_str());
-    link(vertShader,fragShader);
-    glDeleteShader(vertShader.id);
-    glDeleteShader(fragShader.id);
-  }
-  void link(const VertexShader& vert,const FragmentShader& frag) {
-      id = glCreateProgram();
-      glAttachShader(id,vert.id);
-      glAttachShader(id,frag.id);
-      glLinkProgram(id);
-  }
-  void use() {
-    glUseProgram(id);
-  }
-};
 GraphicsConfig defaultGraphicsConfig {800,600};
 
 struct Renderable {
@@ -134,13 +81,31 @@ class Renderer {
   std::vector<Renderable> mesh;
 };
 
- Mesh mesh({ 0.5f,  0.5f, 0.0f,  // top right
-     0.5f, -0.5f, 0.0f,  // bottom right
-    -0.5f, -0.5f, 0.0f,  // bottom left
-    -0.5f,  0.5f, 0.0f   // top left 
-  },3,{0,1,3,1,2,3}); 
+ Mesh mesh(
+ {
+    // positions         // colors
+     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+    -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+     0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
+}     
+  ,6,{0,1,2}); 
   
-
+std::map<std::string, Shader> createShaders() {
+  ShaderHandler shaderHandler; 
+  ShaderConfig vertexConfig; 
+  vertexConfig.name = "basic vert";
+  vertexConfig.type = ShaderType::Vertex;
+  vertexConfig.source = "./shaderSrc/basic.vert";
+  ShaderConfig fragmentConfig; 
+  fragmentConfig.name = "basic frag";
+  fragmentConfig.type = ShaderType::Fragment;
+  fragmentConfig.source = "./shaderSrc/basic.frag";
+  ShaderProgramConfig ShaderProgramConfig; 
+  ShaderProgramConfig.fragmentShaderName = "basic frag";
+  ShaderProgramConfig.vertexShaderName = "basic vert";
+  ShaderProgramConfig.name = "basic";
+  return shaderHandler.createShaders({vertexConfig,fragmentConfig},{ShaderProgramConfig});
+}
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 int main(void) {
@@ -163,24 +128,23 @@ int main(void) {
     return -1;
   }
 
-  glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
-  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-  std::string fragStc = loadFile("./shaderSrc/basic.frag");
-  std::string vertSrc = loadFile("./shaderSrc/basic.vert");
- 
-    Shader shader;
-    shader.createProgram(vertSrc,fragStc);
+    glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    auto shaders = createShaders(); 
     mesh.intialize();
-    Renderable renderObject{shader,mesh};
-   
+    shaders["basic"].registerUniform("timeColor");
+    Renderable renderObject{shaders["basic"],mesh};
     while (!glfwWindowShouldClose(window)) {
-    processInput(window);
-    glClearColor(color(backgroundColor));
-    glClear(GL_COLOR_BUFFER_BIT);
-    renderObject.draw();
-    glfwSwapBuffers(window);
-    glfwPollEvents();
-    }
+      processInput(window);
+      glClearColor(color(backgroundColor));
+      glClear(GL_COLOR_BUFFER_BIT);
+      float timeValue = glfwGetTime();
+      float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
+      shaders["basic"].setVec4Uniform("timeColor",{greenValue,greenValue,greenValue,0.2f});
+      renderObject.draw();
+      glfwSwapBuffers(window);
+      glfwPollEvents();
+  }
   glfwTerminate();
   return 0;
 }
