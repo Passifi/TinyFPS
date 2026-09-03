@@ -60,12 +60,10 @@ struct Vertex {
   glm::vec3 normals;
   glm::vec2 texCoord;
 };
-Vertex vertex = {{3.f,3.f,3.f},{1.f,1.f,1.f},{1.f,1.f}};
-std::vector<Vertex> verts = {};
 struct Mesh {
   Mesh(std::vector<float> vertices,uint stride) : vertices(vertices) ,stride(stride) {}
   Mesh(std::vector<float> vertices,uint stride, std::vector<unsigned int> indices) : vertices(vertices), indices(indices),stride(stride) {}
-  Mesh(std::vector<float> vertices,uint stritde, std::vector<unsigned int> indices,std::vector<unsigned int> attribInfo) : vertices(vertices), indices(indices),stride(stride), vertexAttribInfo(attribInfo) {}
+  Mesh(std::vector<float> vertices,uint stride, std::vector<unsigned int> indices,std::vector<unsigned int> attribInfo) : vertices(vertices), indices(indices),stride(stride), vertexAttribInfo(attribInfo) {}
   Mesh(std::vector<float> vertices) : vertices(vertices) {}
   std::vector<float> vertices;
   std::vector<unsigned int> indices;
@@ -76,7 +74,7 @@ struct Mesh {
   unsigned int ebo;
   void setVertexAttributes() {
     if(vertexAttribInfo.size() == 0) {
-     glVertexAttribPointer(0,stride,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
+      glVertexAttribPointer(0,stride,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
       glEnableVertexAttribArray(0);
     }
     else {
@@ -96,14 +94,14 @@ struct Mesh {
       glBindVertexArray(vao);
       glBindBuffer(GL_ARRAY_BUFFER,vbo);
       glBufferData(GL_ARRAY_BUFFER,sizeof(float)*vertices.size(),vertices.data(),GL_STATIC_DRAW);
-      glVertexAttribPointer(0,stride,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
-      glEnableVertexAttribArray(0);
+  
       if(indices.size() != 0) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(unsigned int)*indices.size(),indices.data(),GL_STATIC_DRAW);
    
       }
-    setVertexAttributes();
+
+      setVertexAttributes();
   }
 
   void bindVAO() {
@@ -121,7 +119,7 @@ struct Renderable {
   void draw() {
     shader.use();
     if(texture)
-    texture->bind(); 
+      texture->bind(); 
     mesh.bindVAO();
     glDrawElements(GL_TRIANGLES,mesh.indices.size(),GL_UNSIGNED_INT,0);
     glBindVertexArray(0);
@@ -142,7 +140,7 @@ class Renderer {
     -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
     -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
 }     
-  ,8,{0,1,2,3},{3,3,2}); 
+  ,8,{0,1,3,1,2,3},{3,3,2}); 
   
 std::map<std::string, Shader> createShaders() {
   ShaderHandler shaderHandler; 
@@ -181,31 +179,25 @@ int main(void) {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return -1;
   }
-
     glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    // vector math setup
-
     glm::vec4 vec(1.0f,0.0f,0.f,1.0f);
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::translate(trans,glm::vec3(1.0f,1.0f,1.0f));
-    vec = vec * trans; 
-    std::cout << vec.x << vec.y << vec.z << std::endl;
     // loading assets 
     auto imageData = loadImageData("./assets/container.jpg");
     Texture texture(imageData);
     auto shaders = createShaders(); 
     mesh.intialize();
-    shaders["basic"].registerUniform("timeColor");
+    shaders["basic"].registerUniform("transform");
     Renderable renderObject{shaders["basic"],mesh,&texture};
     // rendering
     while (!glfwWindowShouldClose(window)) {
       processInput(window);
       glClearColor(color(backgroundColor));
       glClear(GL_COLOR_BUFFER_BIT);
-      float timeValue = glfwGetTime();
-      float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
-      shaders["basic"].setVec4Uniform("timeColor",{greenValue,greenValue,greenValue,0.2f});
+      
+      glm::mat4 trans = glm::mat4(1.0f);
+      trans = glm::rotate(trans,(float)glfwGetTime(),glm::vec3(0.0f,0.0f,1.0f));
+      shaders["basic"].setMat4Uniform("transform",trans);
       renderObject.draw();
       glfwSwapBuffers(window);
       glfwPollEvents();

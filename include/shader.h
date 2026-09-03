@@ -8,6 +8,7 @@
 #include <variant>
 #include <array>
 #include <assert.h>
+#include "../include/glm/glm.hpp"
 #include "../include/fileIO.h"
 struct VertexShader {
   unsigned int id; 
@@ -53,6 +54,7 @@ struct Shader {
   void use() const; 
   void setFloatUniform(const std::string& name,const float value);
   void setVec4Uniform(const std::string& name, const std::array<float,4>& vec); 
+  void setMat4Uniform(const std::string&name, const glm::mat4 mat4);
   void registerUniform(const std::string& name);
 };
 
