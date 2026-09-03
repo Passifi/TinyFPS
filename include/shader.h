@@ -57,8 +57,8 @@ struct Shader {
 };
 
 enum ShaderType {
-    Vertex,
-    Fragment
+    VertexType,
+    FragmentType
 };
 
 struct ShaderConfig {
@@ -80,13 +80,13 @@ class ShaderHandler {
         std::map<std::string,Shader> shaders;
         for(auto& config : shaderConfig) {
             switch(config.type) {
-                case Fragment: {
+                case FragmentType: {
                    FragmentShader fragShader;
                    auto source = loadFromFile(config.source); 
                    fragShader.compile(source.c_str());
                    fragShaders[config.name] = fragShader;
                    break; }
-                case Vertex: {
+                case VertexType: {
                     VertexShader vertShader;
                     auto source = loadFromFile(config.source); 
                     vertShader.compile(source.c_str());

@@ -3,10 +3,14 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "../include/shader.h"
+#include "../include/glm/glm.hpp"
+#include "../include/glm/gtc/matrix_transform.hpp"
+#include "../include/glm/gtc/type_ptr.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 #include <cmath>
 #define color(c) c.red,c.green,c.blue,c.alpha
+
 struct Color {
   float red;
   float green;
@@ -20,6 +24,7 @@ struct GraphicsConfig {
 };
 class Camera {};
 class Input {};
+
 struct TextureImage {
   int width,height,nrChannels;
   unsigned char* data;
@@ -29,6 +34,8 @@ TextureImage loadImageData(char* source) {
   img.data = stbi_load(source,&img.width,&img.height,&img.nrChannels,0);
   return img;
 }
+
+
 struct Texture {
   unsigned int id;
   Texture(TextureImage img) {
@@ -47,10 +54,18 @@ struct Texture {
   }
    
 };
+
+struct Vertex {
+  glm::vec3 position; 
+  glm::vec3 normals;
+  glm::vec2 texCoord;
+};
+Vertex vertex = {{3.f,3.f,3.f},{1.f,1.f,1.f},{1.f,1.f}};
+std::vector<Vertex> verts = {};
 struct Mesh {
   Mesh(std::vector<float> vertices,uint stride) : vertices(vertices) ,stride(stride) {}
   Mesh(std::vector<float> vertices,uint stride, std::vector<unsigned int> indices) : vertices(vertices), indices(indices),stride(stride) {}
-  Mesh(std::vector<float> vertices,uint stride, std::vector<unsigned int> indices,std::vector<unsigned int> attribInfo) : vertices(vertices), indices(indices),stride(stride), vertexAttribInfo(attribInfo) {}
+  Mesh(std::vector<float> vertices,uint stritde, std::vector<unsigned int> indices,std::vector<unsigned int> attribInfo) : vertices(vertices), indices(indices),stride(stride), vertexAttribInfo(attribInfo) {}
   Mesh(std::vector<float> vertices) : vertices(vertices) {}
   std::vector<float> vertices;
   std::vector<unsigned int> indices;
@@ -117,6 +132,8 @@ class Renderer {
   std::vector<Renderable> mesh;
 };
 
+
+
  Mesh mesh(
  {
     // positions          // colors           // texture coords
@@ -125,17 +142,17 @@ class Renderer {
     -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
     -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
 }     
-  ,8,{0,1,2,3,0},{3,3,2}); 
+  ,8,{0,1,2,3},{3,3,2}); 
   
 std::map<std::string, Shader> createShaders() {
   ShaderHandler shaderHandler; 
   ShaderConfig vertexConfig; 
   vertexConfig.name = "basic vert";
-  vertexConfig.type = ShaderType::Vertex;
+  vertexConfig.type = ShaderType::VertexType;
   vertexConfig.source = "./shaderSrc/basic.vert";
   ShaderConfig fragmentConfig; 
   fragmentConfig.name = "basic frag";
-  fragmentConfig.type = ShaderType::Fragment;
+  fragmentConfig.type = ShaderType::FragmentType;
   fragmentConfig.source = "./shaderSrc/basic.frag";
   ShaderProgramConfig ShaderProgramConfig; 
   ShaderProgramConfig.fragmentShaderName = "basic frag";
@@ -167,14 +184,21 @@ int main(void) {
 
     glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    auto imageData = loadImageData("./assets/container.jpg");
-    std::cout << imageData.width << std::endl; 
-    Texture texture(imageData);
+    // vector math setup
 
+    glm::vec4 vec(1.0f,0.0f,0.f,1.0f);
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::translate(trans,glm::vec3(1.0f,1.0f,1.0f));
+    vec = vec * trans; 
+    std::cout << vec.x << vec.y << vec.z << std::endl;
+    // loading assets 
+    auto imageData = loadImageData("./assets/container.jpg");
+    Texture texture(imageData);
     auto shaders = createShaders(); 
     mesh.intialize();
     shaders["basic"].registerUniform("timeColor");
     Renderable renderObject{shaders["basic"],mesh,&texture};
+    // rendering
     while (!glfwWindowShouldClose(window)) {
       processInput(window);
       glClearColor(color(backgroundColor));
