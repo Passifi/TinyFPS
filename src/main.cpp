@@ -6,6 +6,7 @@
 #include "../include/glm/glm.hpp"
 #include "../include/glm/gtc/matrix_transform.hpp"
 #include "../include/glm/gtc/type_ptr.hpp"
+#include "../include/mesh.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 #include <cmath>
@@ -22,6 +23,9 @@ struct GraphicsConfig {
   int screenWidth;
   int screenHeigth;
 };
+
+GraphicsConfig defaultGraphicsConfig {800,600};
+
 class Camera {};
 class Input {};
 
@@ -29,7 +33,7 @@ struct TextureImage {
   int width,height,nrChannels;
   unsigned char* data;
 };
-TextureImage loadImageData(char* source) {
+TextureImage loadImageData(const char* source) {
   TextureImage img;
   img.data = stbi_load(source,&img.width,&img.height,&img.nrChannels,0);
   return img;
@@ -55,92 +59,129 @@ struct Texture {
    
 };
 
-struct Vertex {
-  glm::vec3 position; 
-  glm::vec3 normals;
-  glm::vec2 texCoord;
-};
-struct Mesh {
-  Mesh(std::vector<float> vertices,uint stride) : vertices(vertices) ,stride(stride) {}
-  Mesh(std::vector<float> vertices,uint stride, std::vector<unsigned int> indices) : vertices(vertices), indices(indices),stride(stride) {}
-  Mesh(std::vector<float> vertices,uint stride, std::vector<unsigned int> indices,std::vector<unsigned int> attribInfo) : vertices(vertices), indices(indices),stride(stride), vertexAttribInfo(attribInfo) {}
-  Mesh(std::vector<float> vertices) : vertices(vertices) {}
-  std::vector<float> vertices;
-  std::vector<unsigned int> indices;
-  std::vector<unsigned int> vertexAttribInfo;
-  unsigned int stride; 
-  unsigned int vao;
-  unsigned int vbo;
-  unsigned int ebo;
-  void setVertexAttributes() {
-    if(vertexAttribInfo.size() == 0) {
-      glVertexAttribPointer(0,stride,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
-      glEnableVertexAttribArray(0);
-    }
-    else {
-      int attributeArrayIndex = 0;
-      int currentLength = 0;
-      for(auto& length : vertexAttribInfo) {
-        glVertexAttribPointer(attributeArrayIndex,length,GL_FLOAT,GL_FALSE, stride*sizeof(float),(void*)(currentLength*sizeof(float)));
-        glEnableVertexAttribArray(attributeArrayIndex++);
-        currentLength += length;
-      }
-   }
-  } 
-  void intialize() {
-      glGenBuffers(1,&vbo);
-      glGenBuffers(1,&ebo);
-      glGenVertexArrays(1,&vao);
-      glBindVertexArray(vao);
-      glBindBuffer(GL_ARRAY_BUFFER,vbo);
-      glBufferData(GL_ARRAY_BUFFER,sizeof(float)*vertices.size(),vertices.data(),GL_STATIC_DRAW);
-  
-      if(indices.size() != 0) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(unsigned int)*indices.size(),indices.data(),GL_STATIC_DRAW);
-   
-      }
 
-      setVertexAttributes();
-  }
 
-  void bindVAO() {
-    glBindVertexArray(vao);
-  }
-}; 
-struct Model {};
 
-GraphicsConfig defaultGraphicsConfig {800,600};
 
 struct Renderable {
   Shader& shader;
   Mesh& mesh;
   Texture* texture;
+  glm::vec3* transform = nullptr;
   void draw() {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model,*transform);
+    shader.setMat4Uniform("model",model); 
     shader.use();
-    if(texture)
+
       texture->bind(); 
+    
     mesh.bindVAO();
+    if(mesh.indices.size() > 0) 
     glDrawElements(GL_TRIANGLES,mesh.indices.size(),GL_UNSIGNED_INT,0);
+    else 
+      glDrawArrays(GL_TRIANGLES,0,36);
     glBindVertexArray(0);
   }
 };
 
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 class Renderer {
-  std::vector<Renderable> mesh;
+  std::vector<Renderable*> renderables;
+  glm::mat4 camera;
+  glm::mat4 projection;
+  uint screenWidth;
+  uint screentHeight;
+  public:
+
+    GLFWwindow* window = nullptr;
+
+    int intialize() {
+    Color backgroundColor{0.2,0.3,0.3,1.0};
+  // intialize Glfws
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  // Ccreate Window
+    window = glfwCreateWindow(defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth, "LearnOpenGL", NULL, NULL);
+    if (window == NULL) {
+      std::cout << "Couldn't Initialize GLFW Window" << std::endl;
+      glfwTerminate();
+      return -1;
+    }
+      glfwMakeContextCurrent(window);
+      if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+      }
+      glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
+      glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+      return 0;
+    }
+    void addRenderable(Renderable*  renderable) {
+      renderables.push_back(renderable); 
+    }
+    void render() {
+      glm::mat4 projection = glm::mat4(1.0f);
+      glm::mat4 model = glm::mat4(1.0f);
+      glm::mat4 view = glm::mat4(1.0f);
+      model = glm::rotate(model,glm::radians(-55.f),glm::vec3(1.0f,0.0f,0.0f));
+      view = glm::translate(view,glm::vec3(0.0f,0.0f,-3.0f));
+      projection = glm::perspective(glm::radians(45.f),800.0f/600.0f,0.1f,100.0f);
+      for(auto&el : renderables) {
+        el->shader.setMat4Uniform("projection",projection); 
+        el->shader.setMat4Uniform("view",view);
+        el->draw();
+      }
+    }
 };
-
-
 
  Mesh mesh(
  {
-    // positions          // colors           // texture coords
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
-}     
-  ,8,{0,1,3,1,2,3},{3,3,2}); 
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+}    
+  ); 
   
 std::map<std::string, Shader> createShaders() {
   ShaderHandler shaderHandler; 
@@ -158,58 +199,42 @@ std::map<std::string, Shader> createShaders() {
   ShaderProgramConfig.name = "basic";
   return shaderHandler.createShaders({vertexConfig,fragmentConfig},{ShaderProgramConfig});
 }
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 int main(void) {
-  Color backgroundColor{0.2,0.3,0.3,1.0};
-  // intialize Glfws
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  // Ccreate Window
- GLFWwindow *window = glfwCreateWindow(defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth, "LearnOpenGL", NULL, NULL);
-  if (window == NULL) {
-    std::cout << "Couldn't Initialize GLFW Window" << std::endl;
-    glfwTerminate();
-    return -1;
-  }
-  glfwMakeContextCurrent(window);
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "Failed to initialize GLAD" << std::endl;
-    return -1;
-  }
-    glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glm::vec4 vec(1.0f,0.0f,0.f,1.0f);
-    // loading assets 
+  Color backgroundColor{0.3f,0.3f,1.0f,1.0f};
+  Renderer renderer;
+  renderer.intialize();  
+  auto window = renderer.window; 
     auto imageData = loadImageData("./assets/container.jpg");
     Texture texture(imageData);
     auto shaders = createShaders(); 
     mesh.intialize();
     shaders["basic"].registerUniform("transform");
-    Renderable renderObject{shaders["basic"],mesh,&texture};
-    // rendering
+    shaders["basic"].registerUniform("projection");
+    shaders["basic"].registerUniform("model");
+    shaders["basic"].registerUniform("view");
+    Renderable renderable{shaders["basic"],mesh,&texture};
+    renderable.transform = new glm::vec3(0.0f,0.0f,0.0f);
+    renderer.addRenderable(&renderable); 
+    glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
       processInput(window);
       glClearColor(color(backgroundColor));
-      glClear(GL_COLOR_BUFFER_BIT);
-      
-      glm::mat4 trans = glm::mat4(1.0f);
-      trans = glm::rotate(trans,(float)glfwGetTime(),glm::vec3(0.0f,0.0f,1.0f));
-      shaders["basic"].setMat4Uniform("transform",trans);
-      renderObject.draw();
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      renderable.transform->x +=0.01;
+      renderer.render(); 
       glfwSwapBuffers(window);
       glfwPollEvents();
   }
   glfwTerminate();
   return 0;
 }
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-  glViewport(0, 0, width, height);
-}
+
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
     glfwSetWindowShouldClose(window, true);
   }
+}
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  glViewport(0, 0, width, height);
 }
