@@ -7,17 +7,8 @@
 #include "../include/glm/gtc/matrix_transform.hpp"
 #include "../include/glm/gtc/type_ptr.hpp"
 #include "../include/mesh.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "../include/stb_image.h"
+#include "../include/graphics.h"
 #include <cmath>
-#define color(c) c.red,c.green,c.blue,c.alpha
-
-struct Color {
-  float red;
-  float green;
-  float blue;
-  float alpha;
-};
 
 struct GraphicsConfig {
   int screenWidth;
@@ -26,78 +17,13 @@ struct GraphicsConfig {
 
 GraphicsConfig defaultGraphicsConfig {800,600};
 
-class Camera {};
+
 class Input {};
 
-struct TextureImage {
-  int width,height,nrChannels;
-  unsigned char* data;
-};
-TextureImage loadImageData(const char* source) {
-  TextureImage img;
-  img.data = stbi_load(source,&img.width,&img.height,&img.nrChannels,0);
-  return img;
-}
-
-
-struct Texture {
-  unsigned int id;
-  Texture(TextureImage img) {
-    glGenTextures(1,&id);
-    glBindTexture(GL_TEXTURE_2D,id);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,img.width,img.height,0,GL_RGB,GL_UNSIGNED_BYTE,img.data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  }
-
-  void bind() {
-    glBindTexture(GL_TEXTURE_2D,id);
-  }
-   
-};
-
-
-
-
-
-struct Renderable {
-  Shader& shader;
-  Mesh& mesh;
-  Texture* texture;
-  glm::vec3* transform = nullptr;
-  void draw() {
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model,*transform);
-    shader.setMat4Uniform("model",model); 
-    shader.use();
-
-      texture->bind(); 
-    
-    mesh.bindVAO();
-    if(mesh.indices.size() > 0) 
-    glDrawElements(GL_TRIANGLES,mesh.indices.size(),GL_UNSIGNED_INT,0);
-    else 
-      glDrawArrays(GL_TRIANGLES,0,36);
-    glBindVertexArray(0);
-  }
-};
-
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-class Renderer {
-  std::vector<Renderable*> renderables;
-  glm::mat4 camera;
-  glm::mat4 projection;
-  uint screenWidth;
-  uint screentHeight;
-  public:
-
-    GLFWwindow* window = nullptr;
-
-    int intialize() {
-    Color backgroundColor{0.2,0.3,0.3,1.0};
+GLFWwindow* initializeGLFW() {
+  GLFWwindow* window = nullptr;   
+  Color backgroundColor{0.2,0.3,0.3,1.0};
   // intialize Glfws
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -108,35 +34,18 @@ class Renderer {
     if (window == NULL) {
       std::cout << "Couldn't Initialize GLFW Window" << std::endl;
       glfwTerminate();
-      return -1;
+      return nullptr;
     }
       glfwMakeContextCurrent(window);
       if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
+        return nullptr;
       }
       glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
       glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-      return 0;
+      return window;
     }
-    void addRenderable(Renderable*  renderable) {
-      renderables.push_back(renderable); 
-    }
-    void render() {
-      glm::mat4 projection = glm::mat4(1.0f);
-      glm::mat4 model = glm::mat4(1.0f);
-      glm::mat4 view = glm::mat4(1.0f);
-      model = glm::rotate(model,glm::radians(-55.f),glm::vec3(1.0f,0.0f,0.0f));
-      view = glm::translate(view,glm::vec3(0.0f,0.0f,-3.0f));
-      projection = glm::perspective(glm::radians(45.f),800.0f/600.0f,0.1f,100.0f);
-      for(auto&el : renderables) {
-        el->shader.setMat4Uniform("projection",projection); 
-        el->shader.setMat4Uniform("view",view);
-        el->draw();
-      }
-    }
-};
-
+ 
  Mesh mesh(
  {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -199,12 +108,13 @@ std::map<std::string, Shader> createShaders() {
   ShaderProgramConfig.name = "basic";
   return shaderHandler.createShaders({vertexConfig,fragmentConfig},{ShaderProgramConfig});
 }
+
 void processInput(GLFWwindow *window);
+
 int main(void) {
   Color backgroundColor{0.3f,0.3f,1.0f,1.0f};
   Renderer renderer;
-  renderer.intialize();  
-  auto window = renderer.window; 
+  auto window = initializeGLFW(); 
     auto imageData = loadImageData("./assets/container.jpg");
     Texture texture(imageData);
     auto shaders = createShaders(); 
@@ -213,15 +123,36 @@ int main(void) {
     shaders["basic"].registerUniform("projection");
     shaders["basic"].registerUniform("model");
     shaders["basic"].registerUniform("view");
-    Renderable renderable{shaders["basic"],mesh,&texture};
-    renderable.transform = new glm::vec3(0.0f,0.0f,0.0f);
-    renderer.addRenderable(&renderable); 
+    std::vector<glm::vec3*> transforms; 
+    glm::vec3 scale(0.02f,0.02f,0.02f); 
+    for(int i =0;i < 100; i++) { 
+      float rndX = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
+      float rndY = -1.0f + 2.0f*(float)std::rand()/RAND_MAX;
+      float rndZ = -1.0f + 2.0f*(float)std::rand()/RAND_MAX;
+      auto currentTransform = new glm::vec3(rndX,rndY,rndZ);
+      transforms.push_back(currentTransform);
+      Renderable* renderable = new Renderable{shaders["basic"],mesh,&texture,currentTransform,&scale};
+      renderer.addRenderable(renderable); 
+    }
     glEnable(GL_DEPTH_TEST);
+    float lastTime = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
+      float delta = glfwGetTime()-lastTime;
+      lastTime = glfwGetTime();
       processInput(window);
       glClearColor(color(backgroundColor));
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      renderable.transform->x +=0.01;
+      for(auto& el : transforms) {
+        el->y -= 1.0f*delta;
+        if(el->y < -2.0f) {
+          el->x = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
+          el->z = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
+          el->y = 2.0f;
+        }
+      }
+      scale.x = (std::sin(glfwGetTime())*0.2);
+      scale.y = (std::sin(glfwGetTime())*0.2);
+      scale.z = (std::sin(glfwGetTime())*0.2);
       renderer.render(); 
       glfwSwapBuffers(window);
       glfwPollEvents();
