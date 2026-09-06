@@ -60,30 +60,55 @@ struct Renderable {
   }
 };
 
+enum RendererPerspective {
+ Orthographic, 
+ Perspective
+};
+
 class Renderer {
 
   Color backgroundColor{0.9,0.1,0.8,1.0};
   std::vector<Renderable*> renderables;
   glm::mat4 projection;
-  uint screenWidth;
-  uint screentHeight;
+  uint screenWidth = 800;
+  uint screenHeight = 600;
+  RendererPerspective perspectiveState = Perspective;
   public:
 
     Camera camera;
     Renderer() {
     }
+
+   void toggleProjectionState() {
+    perspectiveState = Perspective ? Orthographic : Perspective;
+   }
+   void setViewport() {
+    setViewport(45.0f,(float)screenWidth,(float)screenHeight);
+   }
+   void setScreenDimensions(uint width, uint height) {
+    this->screenWidth = width;
+    this->screenHeight = height;
+   }
+   void setViewport(float fov,float width,float height) {
+
+      if(perspectiveState == Orthographic)
+        projection = glm::ortho(0.0f,width,0.0f,height); 
+      else 
+        projection = glm::perspective(glm::radians(fov),width/height,0.1f,100.0f);
+   }
    void initialize() {
       glClearColor(color(backgroundColor));
       glEnable(GL_DEPTH_TEST);
+      setViewport(45.0f,800.0f,600.0f);
    }
    void addRenderable(Renderable*  renderable) {
       renderables.push_back(renderable); 
     }
+
+    
     void render() {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glm::mat4 projection = glm::mat4(1.0f);
       glm::mat4 view = camera.getView();
-      projection = glm::perspective(glm::radians(45.f),800.0f/600.0f,0.1f,100.0f);
       glm::mat4 baseMat(1.0f);
       for(auto&el : renderables) {
         glm::mat4 translation = glm::translate(baseMat,*el->transform);

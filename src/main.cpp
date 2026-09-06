@@ -8,6 +8,7 @@
 #include "../include/glm/gtc/type_ptr.hpp"
 #include "../include/mesh.h"
 #include "../include/graphics.h"
+#include "../include/Mouse.h"
 #include <cmath>
 
 struct GraphicsConfig {
@@ -20,6 +21,7 @@ GraphicsConfig defaultGraphicsConfig {800,600};
 
 class Input {};
 
+void mouseCallback(GLFWwindow* window, double xPosition, double yPosition);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 GLFWwindow* initializeGLFW() {
   GLFWwindow* window = nullptr;   
@@ -43,9 +45,11 @@ GLFWwindow* initializeGLFW() {
       }
       glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
       glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+      glfwSetCursorPosCallback(window,mouseCallback);
+glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
       return window;
     }
- 
+Mouse mouse; 
  Mesh mesh(
  {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -122,7 +126,7 @@ int main(void) {
     mesh.intialize();
     renderer.initialize();
     std::vector<glm::vec3*> transforms; 
-    glm::vec3 scale(0.02f,0.02f,0.02f); 
+    glm::vec3 scale(0.2f,0.2f,0.2f); 
     for(int i =0;i < 100; i++) { 
       float rndX = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
       float rndY = -1.0f + 2.0f*(float)std::rand()/RAND_MAX;
@@ -140,14 +144,6 @@ int main(void) {
       deltaTime = delta; 
       lastTime = glfwGetTime();
       processInput(window);
-     for(auto& el : transforms) {
-        el->y -= 1.0f*delta;
-        if(el->y < -2.0f) {
-          el->x = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
-          el->z = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
-          el->y = 2.0f;
-        }
-      }
       renderer.render(); 
       glfwSwapBuffers(window);
       glfwPollEvents();
@@ -175,9 +171,23 @@ void processInput(GLFWwindow *window) {
   if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS) {
     renderer.camera.moveCameraX(cameraSpeed);
   }
+  if(glfwGetKey(window,GLFW_KEY_X) == GLFW_PRESS) {
+    //renderer.toggleProjectionState();
+    //renderer.setViewport(); 
+    // viewport switching breaks the display. 
+    // This is due to orthographic projection, but for whatever reason goign tback to perspective projection doesn't fix it,
+    // so currently this break the app
+  }
 
+}
 
+void mouseCallback(GLFWwindow* window, double xPosition, double yPosition) {
+   mouse.updateMouse(xPosition,yPosition);
+  renderer.camera.setRotation(mouse.getOffsetX(),mouse.getOffsetY());
+  renderer.camera.updateTarget();
 }
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
+  renderer.setScreenDimensions(width,height);
+  renderer.setViewport();
 }

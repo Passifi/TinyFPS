@@ -10,10 +10,13 @@ struct Camera {
   glm::vec3 right;
   glm::vec3 up;
   glm::mat4 view;
+  float pitch,yaw; 
   bool isDirty = false;
   Camera() {
+    pitch = yaw = 0.0f;
+    updateTarget();
+    std::cout << target.x << target.y << target.z << std::endl;
     position = {0.0f,0.0f,3.0f};
-    target = {0.0f,0.0f,-1.0f};
     up = {0.0f,1.0f,0.0};
     view = glm::lookAt(position,position+target,up);
   }
@@ -22,6 +25,17 @@ struct Camera {
     up = glm::cross(direction,right);
     view = glm::lookAt(position,target,up);
 
+  }
+
+  void updateTarget() {
+    target.x = cos(glm::radians(yaw)*cos(glm::radians(pitch)));
+    target.y = sin(glm::radians(pitch));
+    target.z = sin(glm::radians(yaw)*cos(glm::radians(pitch)));
+    target = glm::normalize(target);
+  }
+  void setRotation(float offsetX, float offsetY) {
+    yaw += offsetX; 
+    pitch += offsetY;
   }
   void moveCameraY(float value) {
     position += target*value;
