@@ -64,11 +64,12 @@ class Renderer {
 
   Color backgroundColor{0.9,0.1,0.8,1.0};
   std::vector<Renderable*> renderables;
-  Camera camera;
   glm::mat4 projection;
   uint screenWidth;
   uint screentHeight;
   public:
+
+    Camera camera;
     Renderer() {
     }
    void initialize() {

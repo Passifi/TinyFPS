@@ -111,10 +111,10 @@ std::map<std::string, Shader> createShaders() {
 }
 
 void processInput(GLFWwindow *window);
-
+float deltaTime =0.0f;
+Renderer renderer;
 int main(void) {
   Color backgroundColor{0.3f,0.3f,1.0f,1.0f};
-  Renderer renderer;
   auto window = initializeGLFW(); 
     auto imageData = loadImageData("./assets/container.jpg");
     Texture texture(imageData);
@@ -137,6 +137,7 @@ int main(void) {
     float lastTime = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
       float delta = glfwGetTime()-lastTime;
+      deltaTime = delta; 
       lastTime = glfwGetTime();
       processInput(window);
      for(auto& el : transforms) {
@@ -156,9 +157,26 @@ int main(void) {
 }
 
 void processInput(GLFWwindow *window) {
+
+  const float cameraSpeedBase = 10.0f; 
+  float cameraSpeed = cameraSpeedBase*deltaTime;
   if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
     glfwSetWindowShouldClose(window, true);
   }
+  if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS) {
+    renderer.camera.moveCameraY(cameraSpeed);
+  }
+  if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS) {
+    renderer.camera.moveCameraY(-cameraSpeed);
+  }
+  if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS) {
+    renderer.camera.moveCameraX(-cameraSpeed);
+  }
+  if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS) {
+    renderer.camera.moveCameraX(cameraSpeed);
+  }
+
+
 }
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
