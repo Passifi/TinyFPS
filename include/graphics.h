@@ -48,17 +48,8 @@ struct Renderable {
   glm::vec3* transform = nullptr;
   glm::vec3* dimension = nullptr;
   void draw() {
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model,*transform);
-        shader.use();
-    if(dimension) {
-      model = glm::scale(model,*dimension);  
-    }
-
-
-    shader.setMat4Uniform("model",model); 
-      texture->bind(); 
-    
+    shader.use();
+    texture->bind(); 
     mesh.bindVAO();
     if(mesh.indices.size() > 0) 
     glDrawElements(GL_TRIANGLES,mesh.indices.size(),GL_UNSIGNED_INT,0);
@@ -69,25 +60,40 @@ struct Renderable {
 };
 
 class Renderer {
+
+  Color backgroundColor{0.9,0.1,0.8,1.0};
   std::vector<Renderable*> renderables;
   glm::mat4 camera;
   glm::mat4 projection;
   uint screenWidth;
   uint screentHeight;
   public:
+    
+    Renderer() {
 
-
+    }
+   void initialize() {
+      glClearColor(color(backgroundColor));
+      glEnable(GL_DEPTH_TEST);
+   }
    void addRenderable(Renderable*  renderable) {
       renderables.push_back(renderable); 
     }
     void render() {
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
       glm::mat4 projection = glm::mat4(1.0f);
       glm::mat4 view = glm::mat4(1.0f);
       view = glm::translate(view,glm::vec3(0.0f,0.0f,-3.0f));
       projection = glm::perspective(glm::radians(45.f),800.0f/600.0f,0.1f,100.0f);
+      glm::mat4 baseMat(1.0f);
       for(auto&el : renderables) {
-        el->shader.setMat4Uniform("projection",projection); 
-        el->shader.setMat4Uniform("view",view);
+        glm::mat4 translation = glm::translate(baseMat,*el->transform);
+        if(el->dimension)
+         translation = glm::scale(translation,*el->dimension);
+        glm::mat4 mvp = translation;
+
+        el->shader.setMat4Uniform("mvp",projection*view*mvp); 
         el->draw();
       }
     }

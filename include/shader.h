@@ -72,6 +72,7 @@ struct ShaderProgramConfig {
     std::string name;
     std::string fragmentShaderName;
     std::string vertexShaderName;
+    std::vector<std::string> uniforms;
 };
 
 class ShaderHandler {
@@ -107,6 +108,9 @@ class ShaderHandler {
             auto vertShader = vertexShaders[config.vertexShaderName];
             shader.link(vertShader,fragShader);
             shaders[config.name] = shader;
+            for(auto& uniform : config.uniforms) {
+              shaders[config.name].registerUniform(uniform);
+            }
         }
         return shaders;
     }

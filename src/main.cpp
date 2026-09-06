@@ -106,6 +106,7 @@ std::map<std::string, Shader> createShaders() {
   ShaderProgramConfig.fragmentShaderName = "basic frag";
   ShaderProgramConfig.vertexShaderName = "basic vert";
   ShaderProgramConfig.name = "basic";
+  ShaderProgramConfig.uniforms = {"mvp"};
   return shaderHandler.createShaders({vertexConfig,fragmentConfig},{ShaderProgramConfig});
 }
 
@@ -119,10 +120,7 @@ int main(void) {
     Texture texture(imageData);
     auto shaders = createShaders(); 
     mesh.intialize();
-    shaders["basic"].registerUniform("transform");
-    shaders["basic"].registerUniform("projection");
-    shaders["basic"].registerUniform("model");
-    shaders["basic"].registerUniform("view");
+    renderer.initialize();
     std::vector<glm::vec3*> transforms; 
     glm::vec3 scale(0.02f,0.02f,0.02f); 
     for(int i =0;i < 100; i++) { 
@@ -134,15 +132,14 @@ int main(void) {
       Renderable* renderable = new Renderable{shaders["basic"],mesh,&texture,currentTransform,&scale};
       renderer.addRenderable(renderable); 
     }
-    glEnable(GL_DEPTH_TEST);
+
+
     float lastTime = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
       float delta = glfwGetTime()-lastTime;
       lastTime = glfwGetTime();
       processInput(window);
-      glClearColor(color(backgroundColor));
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      for(auto& el : transforms) {
+     for(auto& el : transforms) {
         el->y -= 1.0f*delta;
         if(el->y < -2.0f) {
           el->x = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
@@ -150,9 +147,6 @@ int main(void) {
           el->y = 2.0f;
         }
       }
-      scale.x = (std::sin(glfwGetTime())*0.2);
-      scale.y = (std::sin(glfwGetTime())*0.2);
-      scale.z = (std::sin(glfwGetTime())*0.2);
       renderer.render(); 
       glfwSwapBuffers(window);
       glfwPollEvents();
