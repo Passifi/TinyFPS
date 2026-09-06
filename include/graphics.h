@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
+#include "../include/camera.h"
 #define color(c) c.red,c.green,c.blue,c.alpha
 
 struct Color {
@@ -63,14 +64,12 @@ class Renderer {
 
   Color backgroundColor{0.9,0.1,0.8,1.0};
   std::vector<Renderable*> renderables;
-  glm::mat4 camera;
+  Camera camera;
   glm::mat4 projection;
   uint screenWidth;
   uint screentHeight;
   public:
-    
     Renderer() {
-
     }
    void initialize() {
       glClearColor(color(backgroundColor));
@@ -81,10 +80,8 @@ class Renderer {
     }
     void render() {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
       glm::mat4 projection = glm::mat4(1.0f);
-      glm::mat4 view = glm::mat4(1.0f);
-      view = glm::translate(view,glm::vec3(0.0f,0.0f,-3.0f));
+      glm::mat4 view = camera.getView();
       projection = glm::perspective(glm::radians(45.f),800.0f/600.0f,0.1f,100.0f);
       glm::mat4 baseMat(1.0f);
       for(auto&el : renderables) {
@@ -92,7 +89,6 @@ class Renderer {
         if(el->dimension)
          translation = glm::scale(translation,*el->dimension);
         glm::mat4 mvp = translation;
-
         el->shader.setMat4Uniform("mvp",projection*view*mvp); 
         el->draw();
       }

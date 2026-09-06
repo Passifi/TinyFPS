@@ -11,13 +11,22 @@ struct Camera {
   glm::vec3 up;
   glm::mat4 view;
   bool isDirty = false;
+  Camera() {
+    position = {0.0f,0.0f,3.0f};
+    target = {0.0f,0.0f,0.0f};
+    up = {0.0f,1.0f,0.0};
+    view = glm::lookAt(position,target,up);
+  }
   Camera(glm::vec3 position, glm::vec3 target, glm::vec3 direction) : position(position), target(target), direction(direction) {
     right = glm::normalize(glm::cross(glm::vec3(0.0f,1.0,0.0f),direction));
     up = glm::cross(direction,right);
     view = glm::lookAt(position,target,up);
 
   }
-  void moveCamera(glm::vec3 offset);
+  void moveCamera(glm::vec3 offset) {
+    position -= offset;
+    isDirty = true;
+  }
   void rotate(glm::vec3 offset);
   glm::mat4 getView() {
     if(isDirty) {
