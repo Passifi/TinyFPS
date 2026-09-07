@@ -8,6 +8,8 @@
 #include <variant>
 #include "shader.h"
 
+
+
 std::vector<std::string> keywords = {
   "ShaderConfig",
   "ShaderProgramConfig"
@@ -22,7 +24,10 @@ enum TinyTokenType {
   Righ_Curly,
   Comma,
   FileEnd,
-  String
+  String,
+  Int,
+  Float,
+  Double
 };
 
 using TokenValue =   std::variant<int,float,bool,std::string>;
@@ -62,15 +67,16 @@ class Parser {
             tokens.push_back({Left_Curly});
             break;
           case '}':
-            tokens.push_back({Left_Curly});
+            tokens.push_back(Righ_Curly);
             break;
           case '[':
-            tokens.push_back({Left_Curly});
+            tokens.push_back({Left_Bracket});
             break;
           case ']':
-            tokens.push_back({Left_Curly});
+            tokens.push_back({Right_Bracket});
             break;
           case '\n':
+
             break;
           case ':':
             tokens.push_back({Seperator});
@@ -89,8 +95,23 @@ class Parser {
               }
               tokens.push_back({TinyTokenType::Keyword,keyvalue});
             }
+            if(isalnum(c) || c == '.') {
+              std::string value{c};
+              while(isdigit(peek())) {
+                value.push_back(advance());   
+              }   
+              if(peek() == '.') {
+                value.push_back(advance());
+                while(isdigit(peek())) {
+                  value.push_back(advance());   
+                }   
+                tokens.push_back({TinyTokenType::Float,stof(value)});
+              }
+              else {
+                tokens.push_back({TinyTokenType::Int,stoi(value)});
+              }
         }
-      }
+      }}
       return tokens;
     }
 };

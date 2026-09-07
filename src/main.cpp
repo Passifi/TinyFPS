@@ -11,11 +11,11 @@
 #include "../include/Mouse.h"
 #include "../include/texture.h"
 #include <cmath>
-
 struct GraphicsConfig {
   int screenWidth;
   int screenHeigth;
 };
+
 
 GraphicsConfig defaultGraphicsConfig {800,600};
 #ifndef STDB_IMAGE_IMPLEMENTATION
@@ -28,14 +28,8 @@ TextureImage loadImageData(const char* source) {
   img.data = stbi_load(source,&img.width,&img.height,&img.nrChannels,0);
   return img;
 }
-
-
-class Input {};
-
 void mouseCallback(GLFWwindow* window, double xPosition, double yPosition);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-
-
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 GLFWwindow* initializeGLFW() {
   GLFWwindow* window = nullptr;   
@@ -149,15 +143,20 @@ void processInput(GLFWwindow *window);
 float deltaTime =0.0f;
 Renderer renderer;
 int main(void) {
-  Color backgroundColor{0.3f,0.3f,1.0f,1.0f};
   auto window = initializeGLFW(); 
-    auto imageData = loadImageData("./assets/container.jpg");
-    Texture texture(imageData);
-    auto shaders = createShaders(); 
-    mesh.intialize();
-    renderer.initialize();
-    std::vector<glm::vec3*> transforms; 
-    glm::vec3 scale(0.2f,0.2f,0.2f); 
+  auto imageData = loadImageData("./assets/container.jpg");
+  
+  // load textures 
+  // load shaders 
+  // load materials 
+  // bind to Renderables according to composition principles
+ 
+  Texture texture(imageData);
+  auto shaders = createShaders(); 
+  mesh.intialize();
+  renderer.initialize();
+  std::vector<glm::vec3*> transforms; 
+  glm::vec3 scale(0.2f,0.2f,0.2f); 
     Material stdMaterial{0.2f,0.9f,0.5f};
     for(int i =0;i < 100; i++) { 
       float rndX = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
