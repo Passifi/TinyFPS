@@ -4,6 +4,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 #include "../include/camera.h"
+#include "../include/renderable.h"
+#include "material.h"
 #define color(c) c.red,c.green,c.blue,c.alpha
 
 struct Color {
@@ -42,28 +44,16 @@ struct Texture {
   }
    
 };
-struct Renderable {
-  Shader& shader;
-  Mesh& mesh;
-  Texture* texture;
-  glm::vec3* transform = nullptr;
-  glm::vec3* dimension = nullptr;
-  void draw() {
-    shader.use();
-    texture->bind(); 
-    mesh.bindVAO();
-    if(mesh.indices.size() > 0) 
-    glDrawElements(GL_TRIANGLES,mesh.indices.size(),GL_UNSIGNED_INT,0);
-    else 
-      glDrawArrays(GL_TRIANGLES,0,36);
-    glBindVertexArray(0);
-  }
-};
 
 enum RendererPerspective {
  Orthographic, 
  Perspective
 };
+
+namespace TinyRenderer{ 
+  const float MAX_FOV = 60.0f;
+  const float MIN_FOV = 1.0f;
+}
 
 class Renderer {
 
@@ -72,18 +62,30 @@ class Renderer {
   glm::mat4 projection;
   uint screenWidth = 800;
   uint screenHeight = 600;
+  float fov = 45.0f;
   RendererPerspective perspectiveState = Perspective;
   public:
 
     Camera camera;
     Renderer() {
     }
-
+   void setFOV(float fov) {
+      this->fov = fov;
+   }
+   void modifyFOV(float offset) {
+    this->fov += offset;
+    if(this->fov < TinyRenderer::MIN_FOV) {
+      this->fov = TinyRenderer::MIN_FOV;
+    } else if
+    (this->fov > TinyRenderer::MAX_FOV ) {
+      this->fov = TinyRenderer::MAX_FOV;
+      }
+   }
    void toggleProjectionState() {
     perspectiveState = Perspective ? Orthographic : Perspective;
    }
    void setViewport() {
-    setViewport(45.0f,(float)screenWidth,(float)screenHeight);
+    setViewport(fov,(float)screenWidth,(float)screenHeight);
    }
    void setScreenDimensions(uint width, uint height) {
     this->screenWidth = width;
@@ -115,7 +117,10 @@ class Renderer {
         if(el->dimension)
          translation = glm::scale(translation,*el->dimension);
         glm::mat4 mvp = translation;
+        el->material->setValues();
         el->shader.setMat4Uniform("mvp",projection*view*mvp); 
+        el->shader.setVec3Uniform("objectColor",{0.3f,0.2f,0.2f});
+        el->shader.setVec3Uniform("lightColor",{0.9f,0.2f,0.1});
         el->draw();
       }
     }

@@ -23,6 +23,9 @@ class Input {};
 
 void mouseCallback(GLFWwindow* window, double xPosition, double yPosition);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 GLFWwindow* initializeGLFW() {
   GLFWwindow* window = nullptr;   
   Color backgroundColor{0.2,0.3,0.3,1.0};
@@ -46,6 +49,7 @@ GLFWwindow* initializeGLFW() {
       glViewport(0, 0, defaultGraphicsConfig.screenWidth, defaultGraphicsConfig.screenHeigth);
       glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
       glfwSetCursorPosCallback(window,mouseCallback);
+      glfwSetScrollCallback(window,scroll_callback);
 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
       return window;
     }
@@ -102,16 +106,32 @@ std::map<std::string, Shader> createShaders() {
   vertexConfig.name = "basic vert";
   vertexConfig.type = ShaderType::VertexType;
   vertexConfig.source = "./shaderSrc/basic.vert";
+  ShaderConfig lightVert; 
+  lightVert.name = "basic vert";
+  lightVert.type = ShaderType::VertexType;
+  lightVert.source = "./shaderSrc/lighting.vert";
+  
   ShaderConfig fragmentConfig; 
   fragmentConfig.name = "basic frag";
   fragmentConfig.type = ShaderType::FragmentType;
   fragmentConfig.source = "./shaderSrc/basic.frag";
-  ShaderProgramConfig ShaderProgramConfig; 
-  ShaderProgramConfig.fragmentShaderName = "basic frag";
-  ShaderProgramConfig.vertexShaderName = "basic vert";
-  ShaderProgramConfig.name = "basic";
-  ShaderProgramConfig.uniforms = {"mvp"};
-  return shaderHandler.createShaders({vertexConfig,fragmentConfig},{ShaderProgramConfig});
+  ShaderConfig lightFragment;
+  lightFragment.name = "light frag";
+  lightFragment.type = ShaderType::FragmentType; 
+  lightFragment.source = "./shaderSrc/lighting.frag";
+  ShaderProgramConfig shaderProgramConfig; 
+  shaderProgramConfig.fragmentShaderName = "basic frag";
+  shaderProgramConfig.vertexShaderName = "basic vert";
+  shaderProgramConfig.name = "basic";
+  shaderProgramConfig.uniforms = {"mvp"};
+  ShaderProgramConfig lighting; 
+  lighting.fragmentShaderName = "light frag";
+  lighting.vertexShaderName = "basic vert";
+  lighting.name = "lighting";
+  lighting.uniforms = {"mvp","objectColor","lightColor"};
+
+
+  return shaderHandler.createShaders({vertexConfig,fragmentConfig,lightFragment},{lighting});
 }
 
 void processInput(GLFWwindow *window);
@@ -127,13 +147,15 @@ int main(void) {
     renderer.initialize();
     std::vector<glm::vec3*> transforms; 
     glm::vec3 scale(0.2f,0.2f,0.2f); 
+    Material stdMaterial; 
     for(int i =0;i < 100; i++) { 
       float rndX = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
       float rndY = -1.0f + 2.0f*(float)std::rand()/RAND_MAX;
       float rndZ = -1.0f + 2.0f*(float)std::rand()/RAND_MAX;
       auto currentTransform = new glm::vec3(rndX,rndY,rndZ);
       transforms.push_back(currentTransform);
-      Renderable* renderable = new Renderable{shaders["basic"],mesh,&texture,currentTransform,&scale};
+
+      Renderable* renderable = new Renderable(shaders["lighting"],mesh,&stdMaterial,&texture,currentTransform,&scale);
       renderer.addRenderable(renderable); 
     }
 
@@ -189,5 +211,12 @@ void mouseCallback(GLFWwindow* window, double xPosition, double yPosition) {
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
   renderer.setScreenDimensions(width,height);
+  renderer.setViewport();
+}
+
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+  renderer.modifyFOV(yoffset);
   renderer.setViewport();
 }

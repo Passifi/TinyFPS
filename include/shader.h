@@ -55,6 +55,7 @@ struct Shader {
   void setFloatUniform(const std::string& name,const float value);
   void setVec4Uniform(const std::string& name, const std::array<float,4>& vec); 
   void setMat4Uniform(const std::string&name, const glm::mat4 mat4);
+  void setVec3Uniform(const std::string& name, const glm::vec3 vec3);
   void registerUniform(const std::string& name);
 };
 
@@ -77,43 +78,8 @@ struct ShaderProgramConfig {
 
 class ShaderHandler {
     public:
-    std::map<std::string,Shader> createShaders(std::vector<ShaderConfig> shaderConfig, std::vector<ShaderProgramConfig> shaderProgramConfig) {
-        std::map<std::string,FragmentShader> fragShaders;
-        std::map<std::string,VertexShader> vertexShaders;
-        std::map<std::string,Shader> shaders;
-        for(auto& config : shaderConfig) {
-            switch(config.type) {
-                case FragmentType: {
-                   FragmentShader fragShader;
-                   auto source = loadFromFile(config.source); 
-                   fragShader.compile(source.c_str());
-                   fragShaders[config.name] = fragShader;
-                   break; }
-                case VertexType: {
-                    VertexShader vertShader;
-                    auto source = loadFromFile(config.source); 
-                    vertShader.compile(source.c_str());
-                    vertexShaders[config.name] = vertShader;
-                    break;
-                }
-            }
-        }
-        for(auto &config : shaderProgramConfig) {
-            Shader shader;
-            if(fragShaders.count(config.fragmentShaderName) == 0 || vertexShaders.count(config.vertexShaderName)==0) {
-                std::cout << "Coudln't create shader of name " << config.name << std::endl; 
-                continue;
-            }
-            auto fragShader = fragShaders[config.fragmentShaderName];
-            auto vertShader = vertexShaders[config.vertexShaderName];
-            shader.link(vertShader,fragShader);
-            shaders[config.name] = shader;
-            for(auto& uniform : config.uniforms) {
-              shaders[config.name].registerUniform(uniform);
-            }
-        }
-        return shaders;
-    }
+    std::map<std::string,Shader> createShaders(std::vector<ShaderConfig> shaderConfig, std::vector<ShaderProgramConfig> shaderProgramConfig); 
+
 };
 
 

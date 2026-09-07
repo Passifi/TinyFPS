@@ -2,7 +2,7 @@ class Mouse {
 
     float lastX,lastY; 
     float xOffset,yOffset; 
-    float sensitivity = 1.0;
+    float sensitivity = 0.1;
     bool firstMouse = true; 
     public:
     void updateMouse(float x, float y) {
