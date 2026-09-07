@@ -1,7 +1,6 @@
 #pragma once
 #include "material.h"
 #include "mesh.h"
-#include "graphics.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
