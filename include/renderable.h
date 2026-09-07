@@ -1,6 +1,8 @@
 #pragma once
-#include "material.h"
 #include "mesh.h"
+#include "material.h"
+#include "shader.h"
+#include "texture.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 

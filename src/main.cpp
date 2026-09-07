@@ -9,6 +9,7 @@
 #include "../include/mesh.h"
 #include "../include/graphics.h"
 #include "../include/Mouse.h"
+#include "../include/texture.h"
 #include <cmath>
 
 struct GraphicsConfig {
@@ -17,6 +18,16 @@ struct GraphicsConfig {
 };
 
 GraphicsConfig defaultGraphicsConfig {800,600};
+#ifndef STDB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#endif
+
+TextureImage loadImageData(const char* source) {
+  TextureImage img;
+  img.data = stbi_load(source,&img.width,&img.height,&img.nrChannels,0);
+  return img;
+}
 
 
 class Input {};
@@ -128,7 +139,7 @@ std::map<std::string, Shader> createShaders() {
   lighting.fragmentShaderName = "light frag";
   lighting.vertexShaderName = "basic vert";
   lighting.name = "lighting";
-  lighting.uniforms = {"mvp","objectColor","lightColor"};
+  lighting.uniforms = {"mvp","objectColor","lightColor","diffuse","specular","ambient"};
 
 
   return shaderHandler.createShaders({vertexConfig,fragmentConfig,lightFragment},{lighting});
@@ -147,7 +158,7 @@ int main(void) {
     renderer.initialize();
     std::vector<glm::vec3*> transforms; 
     glm::vec3 scale(0.2f,0.2f,0.2f); 
-    Material stdMaterial; 
+    Material stdMaterial{0.2f,0.9f,0.5f};
     for(int i =0;i < 100; i++) { 
       float rndX = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
       float rndY = -1.0f + 2.0f*(float)std::rand()/RAND_MAX;

@@ -6,7 +6,7 @@ void Shader::createProgram(const std::string& vertSource,const std::string& frag
     vertShader.compile(vertSource.c_str());
     fragShader.compile(fragSource.c_str());
     link(vertShader,fragShader);
-  }
+}
 void Shader::link(const VertexShader& vert,const FragmentShader& frag) {
       id = glCreateProgram();
       std::cout << id << ", Frag: " << frag.id << ", Vert: " << vert.id << std::endl;
@@ -49,7 +49,8 @@ std::map<std::string,Shader> ShaderHandler::createShaders(std::vector<ShaderConf
                    auto source = loadFromFile(config.source); 
                    fragShader.compile(source.c_str());
                    fragShaders[config.name] = fragShader;
-                   break; }
+                   break; 
+                }
                 case VertexType: {
                     VertexShader vertShader;
                     auto source = loadFromFile(config.source); 
