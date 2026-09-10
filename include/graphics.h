@@ -22,8 +22,8 @@ class Renderer {
   Color backgroundColor{0.9,0.1,0.8,1.0};
   std::vector<Renderable*> renderables;
   glm::mat4 projection;
-  uint screenWidth = 800;
-  uint screenHeight = 600;
+  unsigned int screenWidth = 800;
+  unsigned int screenHeight = 600;
   float fov = 45.0f;
   RendererPerspective perspectiveState = Perspective;
   public:
@@ -32,7 +32,7 @@ class Renderer {
     void modifyFOV(float offset);
     void toggleProjectionState(); 
     void setViewport(); 
-    void setScreenDimensions(uint width, uint height); 
+    void setScreenDimensions(unsigned int width, unsigned int height); 
     void setViewport(float fov,float width,float height);
     void initialize();
     void addRenderable(Renderable*  renderable);

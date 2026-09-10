@@ -31,8 +31,8 @@ struct Vertex {
 struct Mesh {
     std::vector<float> vertices;
   std::vector<unsigned int> indices;
-  std::vector<unsigned int> vertexAttribInfo {3,2};
-  unsigned int stride =5;
+  std::vector<unsigned int> vertexAttribInfo {3};
+  unsigned int stride =6;
   unsigned int vao;
   unsigned int vbo;
   unsigned int ebo;

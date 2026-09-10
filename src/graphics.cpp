@@ -18,7 +18,7 @@ void Renderer::modifyFOV(float offset) {
 void Renderer::setViewport() {
     setViewport(fov,(float)screenWidth,(float)screenHeight);
    }
-   void Renderer::setScreenDimensions(uint width, uint height) {
+   void Renderer::setScreenDimensions(unsigned int width, unsigned int height) {
     this->screenWidth = width;
     this->screenHeight = height;
    }
@@ -46,14 +46,13 @@ void Renderer::setViewport() {
         if(el->dimension)
          translation = glm::scale(translation,*el->dimension);
         glm::mat4 mvp = translation;
-        if(el->material) {
-            el->shader.setFloatUniform("diffuse",el->material->diffuse);
-            el->shader.setFloatUniform("ambient",el->material->ambient);
-            el->shader.setFloatUniform("specular",el->material->specular);
-        }
-        el->shader.setMat4Uniform("mvp",projection*view*mvp); 
-        el->shader.setVec3Uniform("objectColor",{0.3f,0.2f,0.2f});
-        el->shader.setVec3Uniform("lightColor",{0.9f,0.2f,0.1});
+        el->shader.use();
+        el->shader.setMat4Uniform("model",mvp);
+        el->shader.setMat4Uniform("projection",projection);
+        el->shader.setMat4Uniform("view",view);
+        el->shader.setVec3Uniform("objectColor",{1.0f,0.5f,0.31f});
+        el->shader.setVec3Uniform("lightColor",{1.0f,1.0f,1.0});
+        el->shader.setVec3Uniform("lightPos",glm::vec3(1.2,1.0,0.0));
         el->draw();
       }
     }

@@ -35,6 +35,7 @@ void Shader::setMat4Uniform(const std::string&name, const glm::mat4 mat4) {
 void Shader::registerUniform(const std::string& name) {
     assert(uniformLocations.count(name) ==0);
     int locationId = glGetUniformLocation(id,name.c_str());
+    std::cout << "Registered Uniform: " << name << " as " << locationId << "on shader with id: " << id << std::endl; 
     uniformLocations[name]  = locationId;
 }
 
@@ -43,13 +44,14 @@ std::map<std::string,Shader> ShaderHandler::createShaders(std::vector<ShaderConf
         std::map<std::string,VertexShader> vertexShaders;
         std::map<std::string,Shader> shaders;
         for(auto& config : shaderConfig) {
+            try {
             switch(config.type) {
                 case FragmentType: {
                    FragmentShader fragShader;
                    auto source = loadFromFile(config.source); 
                    fragShader.compile(source.c_str());
                    fragShaders[config.name] = fragShader;
-                   break; 
+                   break;
                 }
                 case VertexType: {
                     VertexShader vertShader;
@@ -60,13 +62,24 @@ std::map<std::string,Shader> ShaderHandler::createShaders(std::vector<ShaderConf
                 }
             }
         }
+        catch(std::exception exception) {
+                        std::cout << "Couldn't compile shader named: " << config.name << "\n" << "From Source: " << config.source << std::endl;
+        }
+        }
         for(auto& el : fragShaders) {
             std::cout << el.first << std::endl;
         }
+        for(auto& el : vertexShaders) {
+            std::cout << el.first << std::endl;
+        }
+
         for(auto &config : shaderProgramConfig) {
             Shader shader;
             if(fragShaders.count(config.fragmentShaderName) == 0 || vertexShaders.count(config.vertexShaderName)==0) {
+                auto culprit = fragShaders.count(config.fragmentShaderName) == 0 ? config.fragmentShaderName : config.vertexShaderName;
                 std::cout << "Coudln't create shader of name " << config.name << std::endl; 
+                std::cout << "Because of shader: " << culprit << std::endl; 
+                 
                 continue;
             }
             auto fragShader = fragShaders[config.fragmentShaderName];

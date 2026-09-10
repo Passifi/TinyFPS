@@ -71,8 +71,8 @@ struct ShaderConfig {
 };
 struct ShaderProgramConfig {
     std::string name;
-    std::string fragmentShaderName;
     std::string vertexShaderName;
+    std::string fragmentShaderName;
     std::vector<std::string> uniforms;
 };
 

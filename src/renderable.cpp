@@ -1,8 +1,8 @@
 #include "../include/renderable.h"
 
 void Renderable::draw() {
-    shader.use();
-    texture->bind(); 
+    if(texture)
+      texture->bind(); 
     mesh.bindVAO();
     if(mesh.indices.size() > 0) 
     glDrawElements(GL_TRIANGLES,mesh.indices.size(),GL_UNSIGNED_INT,0);

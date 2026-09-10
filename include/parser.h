@@ -11,8 +11,11 @@
 
 
 std::vector<std::string> keywords = {
-  "ShaderConfig",
-  "ShaderProgramConfig"
+  "Shader",
+  "ShaderProgram",
+  "Type",
+  "Uniforms",
+  "Source",  
 };
 
 enum TinyTokenType {
@@ -34,16 +37,17 @@ using TokenValue =   std::variant<int,float,bool,std::string>;
 
 class TinyToken {
   
-  TokenValue value;
   public:
+
+    TokenValue value;
     TinyTokenType type;
     
     TinyToken(TinyTokenType type, TokenValue value) : type(type), value(value) {}
     TinyToken(TinyTokenType type) : type(type), value(nullptr) {}
 };
 
-class Parser {
-    private:
+class Lexer {
+   private:
       int current = 0; 
     public: 
         std::string data;
@@ -112,6 +116,59 @@ class Parser {
               }
         }
       }}
+      tokens.push_back({FileEnd});
       return tokens;
     }
+  
 };
+
+class Parser {
+    std::vector<ShaderConfig> shaderConfigs; 
+    std::vector<ShaderProgramConfig> shaderProgramConfigs;
+    std::vector<TinyToken> _tokens; 
+    unsigned int current = 0;
+    bool isAtEnd() {
+      if(current >= _tokens.size() || _tokens[current].type == FileEnd ) {
+        return true;
+      }  
+      else {
+        return false;
+      }
+    }
+    TinyToken peek() {
+      if(!isAtEnd()) 
+      {
+        return _tokens[current];
+      }
+      else {
+        return TinyToken(FileEnd);
+      }
+    }
+    TinyToken advance() {
+      if(!isAtEnd()) {
+        return _tokens[current++];
+      }
+      else {
+        return TinyToken(FileEnd);
+      }
+    }
+
+    void processKeyword(TinyToken t) {
+      std::string* value = nullptr; 
+      value = std::get_if<std::string>(&t.value);
+      if(value == nullptr) {
+        throw new std::exception;
+      }
+
+    }
+    void parse(std::vector<TinyToken> tokens) {
+        _tokens = tokens;
+        auto token = advance();
+        switch(token.type) {
+          case Keyword:
+            processKeyword();
+            break; 
+          case 
+        }
+    }
+  };

@@ -16,7 +16,6 @@ struct GraphicsConfig {
   int screenHeigth;
 };
 
-
 GraphicsConfig defaultGraphicsConfig {800,600};
 #ifndef STDB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -33,7 +32,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 GLFWwindow* initializeGLFW() {
   GLFWwindow* window = nullptr;   
-  Color backgroundColor{0.2,0.3,0.3,1.0};
   // intialize Glfws
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -59,84 +57,76 @@ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
       return window;
     }
 Mouse mouse; 
- Mesh mesh(
- {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+auto cubeMeshData = {
 
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
 
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-}    
-  ); 
-  
-std::map<std::string, Shader> createShaders() {
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+};
+ 
+Mesh mesh(
+  cubeMeshData
+);
+Mesh lightSource(
+  cubeMeshData
+);
+  std::map<std::string, Shader> createShaders() {
   ShaderHandler shaderHandler; 
   ShaderConfig vertexConfig; 
-  vertexConfig.name = "basic vert";
+  vertexConfig.name = "light vert";
   vertexConfig.type = ShaderType::VertexType;
-  vertexConfig.source = "./shaderSrc/basic.vert";
-  ShaderConfig lightVert; 
-  lightVert.name = "basic vert";
-  lightVert.type = ShaderType::VertexType;
-  lightVert.source = "./shaderSrc/lighting.vert";
-  
+  vertexConfig.source = "./shaderSrc/lighting.vert";
   ShaderConfig fragmentConfig; 
-  fragmentConfig.name = "basic frag";
+  fragmentConfig.name = "light frag";
   fragmentConfig.type = ShaderType::FragmentType;
-  fragmentConfig.source = "./shaderSrc/basic.frag";
-  ShaderConfig lightFragment;
-  lightFragment.name = "light frag";
-  lightFragment.type = ShaderType::FragmentType; 
-  lightFragment.source = "./shaderSrc/lighting.frag";
-  ShaderProgramConfig shaderProgramConfig; 
-  shaderProgramConfig.fragmentShaderName = "basic frag";
-  shaderProgramConfig.vertexShaderName = "basic vert";
-  shaderProgramConfig.name = "basic";
-  shaderProgramConfig.uniforms = {"mvp"};
-  ShaderProgramConfig lighting; 
+  fragmentConfig.source = "./shaderSrc/lighting.frag";
+  ShaderConfig srcVertConfig{ShaderType::VertexType,"srclight vert","./shaderSrc/lightSrc.vert"};
+  ShaderConfig srcFragmentConfig{ShaderType::FragmentType,"srclight frag","./shaderSrc/lightSrc.frag"};
+  ShaderProgramConfig lighting;
+  ShaderProgramConfig lightSource{"lighting Source","srclight vert","srclight frag",{"model","projection","view"}};
   lighting.fragmentShaderName = "light frag";
-  lighting.vertexShaderName = "basic vert";
+  lighting.vertexShaderName = "light vert";
   lighting.name = "lighting";
-  lighting.uniforms = {"mvp","objectColor","lightColor","diffuse","specular","ambient"};
-
-
-  return shaderHandler.createShaders({vertexConfig,fragmentConfig,lightFragment},{lighting});
+  lighting.uniforms = {"model","projection","view","lightPos","objectColor","lightColor"};
+  return shaderHandler.createShaders({vertexConfig,fragmentConfig,srcVertConfig,srcFragmentConfig},{lighting,lightSource});
 }
 
 void processInput(GLFWwindow *window);
@@ -145,33 +135,22 @@ Renderer renderer;
 int main(void) {
   auto window = initializeGLFW(); 
   auto imageData = loadImageData("./assets/container.jpg");
-  
-  // load textures 
-  // load shaders 
-  // load materials 
-  // bind to Renderables according to composition principles
- 
   Texture texture(imageData);
   auto shaders = createShaders(); 
   mesh.intialize();
   renderer.initialize();
+  Material stdMaterial;
   std::vector<glm::vec3*> transforms; 
-  glm::vec3 scale(0.2f,0.2f,0.2f); 
-    Material stdMaterial{0.2f,0.9f,0.5f};
-    for(int i =0;i < 100; i++) { 
-      float rndX = -1.0f + 2.0f*(float)std::rand()/(float)RAND_MAX;
-      float rndY = -1.0f + 2.0f*(float)std::rand()/RAND_MAX;
-      float rndZ = -1.0f + 2.0f*(float)std::rand()/RAND_MAX;
-      auto currentTransform = new glm::vec3(rndX,rndY,rndZ);
-      transforms.push_back(currentTransform);
-
-      Renderable* renderable = new Renderable(shaders["lighting"],mesh,&stdMaterial,&texture,currentTransform,&scale);
-      renderer.addRenderable(renderable); 
-    }
-
-
-    float lastTime = glfwGetTime();
-    while (!glfwWindowShouldClose(window)) {
+  glm::vec3 scale(1.0f,1.0f,1.0f); 
+  auto currentTransform = new glm::vec3(0.0,0.0,0.0);
+  transforms.push_back(currentTransform);
+  Renderable* renderable = new Renderable(shaders["lighting"],mesh,&stdMaterial,&texture,currentTransform,&scale);
+  renderer.addRenderable(renderable); 
+  currentTransform = new glm::vec3(1.2,1.0,0.0);
+  renderable = new Renderable(shaders["lighting Source"],mesh,&stdMaterial,&texture,currentTransform,&scale);
+  renderer.addRenderable(renderable); 
+  float lastTime = glfwGetTime();
+  while (!glfwWindowShouldClose(window)) {
       float delta = glfwGetTime()-lastTime;
       deltaTime = delta; 
       lastTime = glfwGetTime();
@@ -213,19 +192,19 @@ void processInput(GLFWwindow *window) {
 
 }
 
-void mouseCallback(GLFWwindow* window, double xPosition, double yPosition) {
+void mouseCallback([[maybe_unused]] GLFWwindow* window, double xPosition, double yPosition) {
    mouse.updateMouse(xPosition,yPosition);
   renderer.camera.setRotation(mouse.getOffsetX(),mouse.getOffsetY());
   renderer.camera.updateTarget();
 }
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+void framebuffer_size_callback([[maybe_unused]] GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
   renderer.setScreenDimensions(width,height);
   renderer.setViewport();
 }
 
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void scroll_callback([[maybe_unused]] GLFWwindow* window,[[maybe_unused]] double xoffset,double yoffset)
 {
   renderer.modifyFOV(yoffset);
   renderer.setViewport();
