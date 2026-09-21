@@ -13,7 +13,7 @@ void Renderable::draw() {
 
 
   Renderable::Renderable(Shader& shader, Mesh& mesh, Material* material, Texture* texture,glm::vec3 * transform, glm::vec3* dimension)
-    : shader(shader), mesh(mesh), material(material), texture(texture), transform(transform), dimension(dimension) 
+    : shader(shader), mesh(mesh), material(material), texture(texture), transform(transform), dimension(dimension),lightSource(nullptr)
   {
 
   };

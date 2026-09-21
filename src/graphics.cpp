@@ -52,7 +52,9 @@ void Renderer::setViewport() {
         el->shader.setMat4Uniform("view",view);
         el->shader.setVec3Uniform("objectColor",{1.0f,0.5f,0.31f});
         el->shader.setVec3Uniform("lightColor",{1.0f,1.0f,1.0});
-        el->shader.setVec3Uniform("lightPos",glm::vec3(1.2,1.0,0.0));
+        if(el->lightSource) {
+          el->shader.setVec3Uniform("lightPos",*el->lightSource);
+        }
         el->draw();
       }
     }

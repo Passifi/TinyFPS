@@ -30,6 +30,26 @@ TextureImage loadImageData(const char* source) {
 void mouseCallback(GLFWwindow* window, double xPosition, double yPosition);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
+class TimeKeeper {
+
+  float lastTick;
+  float delta;
+  public:
+  TimeKeeper() {
+    lastTick = glfwGetTime();
+  }
+  void update() {
+    auto currentTick = glfwGetTime();
+    delta = currentTick-lastTick;
+    lastTick = currentTick;
+  }
+
+  float getDelta() {
+    return delta;
+  }
+};
+
 GLFWwindow* initializeGLFW() {
   GLFWwindow* window = nullptr;   
   // intialize Glfws
@@ -129,9 +149,12 @@ Mesh lightSource(
   return shaderHandler.createShaders({vertexConfig,fragmentConfig,srcVertConfig,srcFragmentConfig},{lighting,lightSource});
 }
 
+TimeKeeper timeKeeper;
+
 void processInput(GLFWwindow *window);
 float deltaTime =0.0f;
 Renderer renderer;
+glm::vec3*  lightPos = nullptr;
 int main(void) {
   auto window = initializeGLFW(); 
   auto imageData = loadImageData("./assets/container.jpg");
@@ -142,18 +165,22 @@ int main(void) {
   Material stdMaterial;
   std::vector<glm::vec3*> transforms; 
   glm::vec3 scale(1.0f,1.0f,1.0f); 
+  std::vector<glm::vec3*> scales{&scale};
+
   auto currentTransform = new glm::vec3(0.0,0.0,0.0);
   transforms.push_back(currentTransform);
-  Renderable* renderable = new Renderable(shaders["lighting"],mesh,&stdMaterial,&texture,currentTransform,&scale);
+  Renderable* renderable = new Renderable(shaders["lighting"],mesh,&stdMaterial,&texture,transforms.back(),scales.back());
+  
   renderer.addRenderable(renderable); 
-  currentTransform = new glm::vec3(1.2,1.0,0.0);
-  renderable = new Renderable(shaders["lighting Source"],mesh,&stdMaterial,&texture,currentTransform,&scale);
+  transforms.push_back(new glm::vec3(-1.2,2.0,0.0));
+  scales.push_back(new glm::vec3{0.2,0.2,0.2});
+  renderable->lightSource = transforms.back();
+  lightPos = transforms.back();
+  renderable = new Renderable(shaders["lighting Source"],mesh,&stdMaterial,&texture,transforms.back(),scales.back());
   renderer.addRenderable(renderable); 
-  float lastTime = glfwGetTime();
+  
   while (!glfwWindowShouldClose(window)) {
-      float delta = glfwGetTime()-lastTime;
-      deltaTime = delta; 
-      lastTime = glfwGetTime();
+      timeKeeper.update(); 
       processInput(window);
       renderer.render(); 
       glfwSwapBuffers(window);
@@ -166,7 +193,7 @@ int main(void) {
 void processInput(GLFWwindow *window) {
 
   const float cameraSpeedBase = 10.0f; 
-  float cameraSpeed = cameraSpeedBase*deltaTime;
+  float cameraSpeed = cameraSpeedBase*timeKeeper.getDelta();
   if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
     glfwSetWindowShouldClose(window, true);
   }
@@ -181,6 +208,11 @@ void processInput(GLFWwindow *window) {
   }
   if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS) {
     renderer.camera.moveCameraX(cameraSpeed);
+  }
+  if(glfwGetKey(window,GLFW_KEY_E) == GLFW_PRESS) {
+    lightPos->x = renderer.camera.position.x + renderer.camera.direction.x;
+    lightPos->y = renderer.camera.position.y+ renderer.camera.direction.y;
+    lightPos->z = renderer.camera.position.z+ renderer.camera.direction.z;
   }
   if(glfwGetKey(window,GLFW_KEY_X) == GLFW_PRESS) {
     //renderer.toggleProjectionState();

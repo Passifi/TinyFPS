@@ -17,23 +17,13 @@
   Mesh::Mesh(std::vector<float> vertices, std::vector<unsigned int> indices) : vertices(vertices), indices(indices) {}
 
   void Mesh::setVertexAttributes() {
-    if(vertexAttribInfo.size() == 0) {
       glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)0);
       glEnableVertexAttribArray(0);
       glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,stride*sizeof(float),(void*)(3*sizeof(float)));
       glEnableVertexAttribArray(1);
 
 
-    }
-    else {
-      int attributeArrayIndex = 0;
-      int currentLength = 0;
-      for(auto& length : vertexAttribInfo) {
-        glVertexAttribPointer(attributeArrayIndex,length,GL_FLOAT,GL_FALSE, stride*sizeof(float),(void*)(currentLength*sizeof(float)));
-        glEnableVertexAttribArray(attributeArrayIndex++);
-        currentLength += length;
-      }
-   }
+
   } 
   void Mesh::intialize() {
       glGenBuffers(1,&vbo);
