@@ -39,7 +39,7 @@ ifeq ($(OS),Windows_NT)
     GLFW_INC := $(GLFW_DIR)/include
     GLFW_LIB := $(GLFW_DIR)/lib-mingw-w64
 
-    CXXFLAGS := -std=c++17 -Wall -Wextra \
+    CXXFLAGS := -std=c++17 -Wall -Wextra -g \
                 -I$(INC_DIR) \
                 -I$(GLFW_INC)
 
@@ -58,7 +58,7 @@ else
 
     # Linux
 
-    CXXFLAGS := -std=c++17 -Wall -Wextra \
+    CXXFLAGS := -std=c++17 -Wall -Wextra -g \
                 -I$(INC_DIR) \
                 $(shell pkg-config --cflags glfw3)
 

@@ -145,7 +145,12 @@ Mesh lightSource(
   lighting.fragmentShaderName = "light frag";
   lighting.vertexShaderName = "light vert";
   lighting.name = "lighting";
-  lighting.uniforms = {"model","projection","view","lightPos","objectColor","lightColor"};
+  lighting.uniforms = {"model","projection",
+    "material.ambient",
+    "material.diffuse",
+    "material.specular",
+    "material.shininess",
+    "view","viewPos","lightPos","objectColor","lightColor"};
   return shaderHandler.createShaders({vertexConfig,fragmentConfig,srcVertConfig,srcFragmentConfig},{lighting,lightSource});
 }
 
@@ -157,12 +162,14 @@ Renderer renderer;
 glm::vec3*  lightPos = nullptr;
 int main(void) {
   auto window = initializeGLFW(); 
+ 
+  // setting up data
   auto imageData = loadImageData("./assets/container.jpg");
   Texture texture(imageData);
   auto shaders = createShaders(); 
   mesh.intialize();
   renderer.initialize();
-  Material stdMaterial;
+  Material stdMaterial {{.2f,.2f,.2},{0.5f,0.5f,0.5f},{1.0f,1.0f,1.0f},32.f,{0.8,0.2f,0.9f,1.0f}};
   std::vector<glm::vec3*> transforms; 
   glm::vec3 scale(1.0f,1.0f,1.0f); 
   std::vector<glm::vec3*> scales{&scale};
@@ -179,8 +186,17 @@ int main(void) {
   renderable = new Renderable(shaders["lighting Source"],mesh,&stdMaterial,&texture,transforms.back(),scales.back());
   renderer.addRenderable(renderable); 
   
+  // create and compile shaders
+  // load and bind meshes
+  // load and bind textures 
+  // combine shaders, meshes, textures to Renderable objects 
+  // configure renderable Objects draw functions
+
+
   while (!glfwWindowShouldClose(window)) {
       timeKeeper.update(); 
+      stdMaterial.color.red = sin(glfwGetTime()*2.0f);
+      stdMaterial.diffuse.x = sin(glfwGetTime()*2.0f);
       processInput(window);
       renderer.render(); 
       glfwSwapBuffers(window);

@@ -9,9 +9,10 @@ struct Color {
   float alpha;
 };
 struct Material {
-    float specular;
-    float diffuse;
-    float ambient;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+    float shininess;
     Color color;
-    Texture* texture = nullptr; 
 };
+

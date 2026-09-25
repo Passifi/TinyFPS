@@ -8,6 +8,7 @@
 
 
 
+
 struct Renderable {
   Shader& shader;
   Mesh& mesh;
@@ -18,5 +19,5 @@ struct Renderable {
   glm::vec3* lightSource = nullptr; 
   Renderable(Shader& shader, Mesh& mesh, Material* material, Texture* texture,glm::vec3 * transform, glm::vec3* dimension);
   void draw();
-
+  
 };

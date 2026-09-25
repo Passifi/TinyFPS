@@ -37,6 +37,8 @@ void Renderer::setViewport() {
    void Renderer::addRenderable(Renderable*  renderable) {
       renderables.push_back(renderable); 
     }
+
+    
     void Renderer::render() {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glm::mat4 view = camera.getView();
@@ -47,11 +49,24 @@ void Renderer::setViewport() {
          translation = glm::scale(translation,*el->dimension);
         glm::mat4 mvp = translation;
         el->shader.use();
+        // supplied by the renderer
+        // set once per model 
         el->shader.setMat4Uniform("model",mvp);
         el->shader.setMat4Uniform("projection",projection);
         el->shader.setMat4Uniform("view",view);
-        el->shader.setVec3Uniform("objectColor",{1.0f,0.5f,0.31f});
+        // supplied by material
+        // still needs to be set when shader has changed or 
+        // we use a different material
+        el->shader.setVec3Uniform("objectColor",{el->material->color.red,el->material->color.blue,el->material->color.blue});
         el->shader.setVec3Uniform("lightColor",{1.0f,1.0f,1.0});
+        el->shader.setVec3Uniform("material.ambient",el->material->ambient);
+        el->shader.setVec3Uniform("material.diffuse",el->material->diffuse);
+        el->shader.setVec3Uniform("material.specular",el->material->specular);
+        el->shader.setFloatUniform("material.shininess",el->material->shininess);
+
+        // supplied by renderer 
+        // set when viewPos or lightPos have changed
+        el->shader.setVec3Uniform("viewPos",camera.position);
         if(el->lightSource) {
           el->shader.setVec3Uniform("lightPos",*el->lightSource);
         }
